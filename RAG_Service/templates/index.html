@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Upload and Q&A</title>
+</head>
+<body>
+    <h1>Upload a PDF File and Ask Questions</h1>
+    <form id="upload-form">
+        <input type="file" id="file-input" name="file" accept="application/pdf">
+        <button type="submit">Upload</button>
+    </form>
+    <div id="file-content"></div>
+    <div id="qa-section" style="display:none;">
+        <h2>Ask a Question</h2>
+        <input type="text" id="question-input" placeholder="Type your question here">
+        <button id="ask-button">Ask</button>
+        <div id="answer"></div>
+    </div>
+
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData();
+            const fileInput = document.getElementById('file-input');
+            formData.append('file', fileInput.files[0]);
+
+            fetch('/upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('file-content').innerText = data.content;
+                    document.getElementById('qa-section').style.display = 'block';
+                    window.fileContent = data.content;
+                }
+            });
+        });
+
+        document.getElementById('ask-button').addEventListener('click', function() {
+            const question = document.getElementById('question-input').value;
+
+            fetch('/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    question: question,
+                    context: window.fileContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('answer').innerText = `Answer: ${data.answer}`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
